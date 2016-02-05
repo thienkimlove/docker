@@ -1,0 +1,40 @@
+web:
+  image: tutorial/nginx
+  ports:
+    - "8000:80"
+  volumes:
+    - ./src:/var/www
+    - ./src/vhost.conf:/etc/nginx/sites-enabled/vhost.conf
+  links:
+    - php
+php:
+  image: nmcteam/php56
+  ports:
+      - "9900:9000"
+  volumes:
+    - ./src/php-fpm.conf:/etc/php5/fpm/php-fpm.conf
+    - ./src:/var/www
+  links:
+    - mysql_master
+mysql_master:
+  image: bitnami/mariadb
+  environment:
+    MARIADB_SERVER_ID: '1' # default
+    MARIADB_USER: 'admin'
+    MARIADB_PASSWORD: 'tieungao'
+    MARIADB_DATABASE: 'cluster_test'
+    MARIADB_REPLICATION_MODE: 'master'
+    MARIADB_REPLICATION_USER: 'my_repl_user'
+    MARIADB_REPLICATION_PASSWORD: 'my_repl_password'
+  ports:
+    - "33061:3306"
+  volumes:
+    - ./volumes/mariandb:/opt/bitnami/mysql/data
+mysql_slave:
+  image: bitnami/mariadb
+  environment:
+    MARIADB_REPLICATION_MODE: 'slave'
+  expose:
+    - "3306"
+  links:
+    - mysql_master:master

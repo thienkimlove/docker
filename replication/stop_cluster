@@ -1,0 +1,45 @@
+#!/bin/bash -e
+
+trap "tput sgr0" EXIT
+
+function usage() {
+    echo "Stops the running cluster"
+    echo ""
+    exit 1
+}
+
+if ! docker ps > /dev/null 2>&1
+then 
+  echo -e '\x1B[1;31m'
+  echo "Docker needs to be installed and running." >&2
+  echo "Try:"
+  echo "  sudo apt-get install docker-io"
+  echo "  or"
+  echo "  sudo yum install docker-io"
+  echo ""
+  echo "See https://docs.docker.com/installation"
+  echo ""
+  exit 1
+fi
+
+function stop_slave() {
+  echo "stopping slave ${1}"
+  docker rm -f slave${1}
+  return $?
+}
+
+function stop_master() {
+  echo "stopping master"
+  docker rm -f master
+  return $?
+}
+
+num_slaves=$(docker ps | grep mysql-slave | wc -l)
+
+stop_master
+
+for (( i=1; i<=$num_slaves; i++ ))
+do
+  stop_slave $i
+done
+echo -e '\x1B[1;36m'"${output}"
